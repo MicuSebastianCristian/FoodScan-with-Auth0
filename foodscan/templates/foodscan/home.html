@@ -1,0 +1,124 @@
+{% extends 'foodscan/base.html' %}
+
+{% block extra_css %}
+<style>
+    /* Styles inspired by index.html, simplified for home */
+    .home-header {
+        padding: 3rem 1rem;
+        text-align: center;
+        background: #f8f9fa; /* Light background */
+        border-bottom: 1px solid #e2e8f0; /* Subtle separator */
+    }
+    .home-header h1 {
+        font-size: 2.5rem;
+        font-weight: 600;
+        color: #2d3748;
+        margin-bottom: 0.5rem;
+    }
+    .home-header p {
+        font-size: 1.1rem;
+        color: #718096;
+        max-width: 600px;
+        margin: 0 auto;
+    }
+
+    .intro-text {
+        text-align: center;
+        padding: 2rem 1rem 0 1rem; /* Padding top/bottom adjusted */
+        color: #4a5568;
+        max-width: 800px;
+        margin: 0 auto; /* Center intro text */
+        font-size: 1.05rem;
+        line-height: 1.7;
+    }
+
+    .action-cards {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 2rem;
+        padding: 2rem 1rem 3rem 1rem; /* Padding around cards adjusted */
+        max-width: 800px; /* Limit width of card area */
+        margin: 0 auto; /* Center the card area */
+    }
+
+    .action-card {
+        background: white;
+        border-radius: 8px;
+        padding: 2rem;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        border: 1px solid #e2e8f0;
+        text-align: center;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .action-card i {
+        font-size: 3rem;
+        color: #56ab2f; /* Green icon */
+        margin-bottom: 1.5rem;
+    }
+
+    .action-card h3 {
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: #2d3748;
+        margin-bottom: 1rem;
+    }
+
+    .action-card p {
+        color: #4a5568;
+        margin-bottom: 1.5rem;
+        flex-grow: 1; /* Allow paragraph to take space */
+    }
+
+    .action-button {
+        display: inline-block;
+        background: #56ab2f;
+        color: white;
+        padding: 0.8rem 2rem;
+        border-radius: 50px;
+        text-decoration: none;
+        font-weight: 600;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+        border: none;
+        cursor: pointer;
+    }
+
+    .action-button:hover {
+        background: #4a9428;
+        transform: translateY(-2px);
+    }
+
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div class="home-header">
+    <h1>Welcome to FoodScan</h1>
+    <p>Your personal AI-powered food analyzer. Choose an option below to get started.</p>
+</div>
+
+<div class="intro-text">
+   <p>Ready to understand your food better? Use <strong>Start Scanning</strong> to analyze product labels instantly or head to the <strong>Calorie Tracker</strong> to manage your daily intake and view progress.</p>
+</div>
+
+<div class="action-cards">
+    <div class="action-card">
+        <i class="fas fa-camera"></i>
+        <h3>Start Scanning</h3>
+        <p>Scan a new product label to analyze its ingredients, check for allergens, and get a health score.</p>
+        <a href="{% url 'scan' %}" class="action-button">Scan Now</a>
+    </div>
+    <div class="action-card">
+        <i class="fas fa-chart-line"></i>
+        <h3>Calorie Tracker</h3>
+        <p>Log your meals, track your daily calorie intake, and view your nutritional history and statistics.</p>
+        <a href="{% url 'calorie_tracker' %}" class="action-button">Go to Tracker</a>
+    </div>
+</div>
+
+{% endblock %}

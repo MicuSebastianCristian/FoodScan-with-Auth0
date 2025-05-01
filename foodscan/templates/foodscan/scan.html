@@ -1,0 +1,315 @@
+{% extends 'foodscan/base.html' %}
+
+{% block extra_css %}
+<style>
+    /* Styles inspired by index.html/home.html */
+    .scan-header {
+        padding: 3rem 1rem;
+        text-align: center;
+        background: #f8f9fa;
+        border-bottom: 1px solid #e2e8f0;
+    }
+    .scan-header h1 {
+        font-size: 2.5rem;
+        font-weight: 600;
+        color: #2d3748;
+        margin-bottom: 0.5rem;
+    }
+    .scan-header p {
+        font-size: 1.1rem;
+        color: #718096;
+        max-width: 700px;
+        margin: 0 auto;
+    }
+
+    .scan-container {
+        max-width: 800px;
+        margin: 2rem auto;
+        padding: 0 1rem;
+    }
+
+    .scan-card {
+        background: white;
+        border-radius: 8px;
+        padding: 2rem;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        border: 1px solid #e2e8f0;
+        margin-bottom: 2rem;
+    }
+
+    .scan-card h5 {
+        font-size: 1.3rem;
+        font-weight: 600;
+        color: #2d3748;
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+     .scan-card h5 i {
+         color: #56ab2f; /* Green */
+     }
+
+    .scan-form .form-label {
+        font-weight: 500;
+    }
+
+    .scan-form .form-text {
+        font-size: 0.85rem;
+    }
+
+    .image-preview-container {
+        max-height: 250px; /* Increased height slightly */
+        overflow: hidden;
+        margin-bottom: 15px;
+        border: 1px solid #dee2e6;
+        border-radius: 4px;
+        background-color: #f8f9fa;
+        text-align: center;
+        display: none; /* Initially hidden */
+        padding: 10px;
+    }
+    .image-preview-container img {
+        max-height: 230px;
+        object-fit: contain;
+    }
+
+    .scan-button,
+    .analyze-button,
+    .demo-button {
+        display: inline-flex; /* Use inline-flex for icon alignment */
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        background: #56ab2f;
+        color: white;
+        padding: 0.8rem 1.5rem;
+        border-radius: 50px;
+        text-decoration: none;
+        font-weight: 600;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+        border: none;
+        cursor: pointer;
+        width: 100%; /* Make buttons full width */
+    }
+
+    .scan-button:hover,
+    .analyze-button:hover,
+    .demo-button:hover {
+        background: #4a9428;
+        transform: translateY(-2px);
+        color: white !important; /* Ensure text stays white on hover */
+    }
+
+    .analyze-button.secondary {
+        background-color: #6c757d; /* Bootstrap secondary color */
+    }
+     .analyze-button.secondary:hover {
+         background-color: #5a6268;
+     }
+
+    .demo-button { /* Specific styles for demo button */
+        background-color: #ffc107; /* Bootstrap warning yellow */
+        color: #212529; /* Dark text for yellow background */
+        margin-top: 10px; /* Add some space above it */
+    }
+    .demo-button:hover {
+        background-color: #e0a800;
+        color: #212529 !important; /* Ensure text stays dark on hover */
+    }
+
+    .accordion-button:not(.collapsed) {
+        color: #052c65; /* Darker blue for active accordion */
+        background-color: #e7f1ff;
+        box-shadow: inset 0 -1px 0 rgba(0, 0, 0, .125);
+    }
+    .accordion-button:focus {
+        box-shadow: 0 0 0 0.25rem rgba(86, 171, 47, 0.25); /* Green focus ring */
+        border-color: rgba(86, 171, 47, 0.5);
+    }
+
+    .accordion {
+        margin-top: 2.5rem; /* Add more space above accordion */
+    }
+
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div class="scan-header">
+    <h1>Scan Product</h1>
+    <p>Scan a product's barcode for quick analysis using Open Food Facts. If that fails, use the alternative options to scan or paste the ingredients list for AI analysis.</p>
+</div>
+
+<div class="scan-container">
+
+    {# --- Primary Option: Barcode Scan --- #}
+    <div class="scan-card">
+        <h5><i class="fas fa-barcode"></i>Scan Barcode (Recommended)</h5>
+        <p class="text-muted small mb-3">Upload a clear picture of the product's barcode. We'll try to find it in the Open Food Facts database.</p>
+        <form id="barcode-form" method="post" enctype="multipart/form-data" class="scan-form">
+            {% csrf_token %}
+            <div class="mb-3">
+                <label for="barcode_image" class="form-label">Upload Barcode Image</label>
+                <input type="file" class="form-control form-control-lg" id="barcode_image" name="barcode_image" accept="image/*" required>
+            </div>
+            <div class="image-preview-container" id="barcode-preview-container">
+                <img id="barcode-image-preview" class="img-fluid d-none" alt="Barcode Preview">
+            </div>
+            {# Hidden input to signal scan mode #}
+            <input type="hidden" name="scan_mode" id="scan_mode" value="upload">
+
+            <button type="submit" class="btn btn-primary scan-button" data-loading-text="Analyzing Barcode...">
+                <i class="fas fa-search"></i> Find & Analyze Product
+            </button>
+            {# Demo Button #}
+            <button type="button" id="demo-scan-button" class="btn demo-button" data-loading-text="Loading Demo Scan...">
+                <i class="fas fa-vial"></i> Try Demo Scan
+            </button>
+            {# Add descriptive text for the demo button #}
+            <p class="text-muted small mt-2 mb-0">
+                Click here to analyze a sample barcode image provided by us, without needing to upload your own.
+            </p>
+        </form>
+    </div>
+
+    {# --- Secondary Options --- #}
+    <div class="accordion" id="secondaryScanOptions">
+
+        {# Option 1: Scan Ingredients List (OCR) #}
+        <div class="accordion-item">
+            <h2 class="accordion-header" id="headingIngredients">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseIngredients" aria-expanded="false" aria-controls="collapseIngredients">
+                    <i class="fas fa-camera me-2"></i> Alternative: Scan Ingredients List
+                </button>
+            </h2>
+            <div id="collapseIngredients" class="accordion-collapse collapse" aria-labelledby="headingIngredients" data-bs-parent="#secondaryScanOptions">
+                <div class="accordion-body">
+                    <p class="text-muted small mb-3">If barcode scanning doesn't work, upload a clear picture of the ingredients list for AI analysis.</p>
+                    <form id="ocr-form" method="post" enctype="multipart/form-data" class="scan-form">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label for="image" class="form-label">Upload Ingredients Image</label>
+                            <input type="file" class="form-control form-control-lg" id="image" name="image" accept="image/*">
+                        </div>
+                        <div class="image-preview-container" id="ingredients-preview-container">
+                            <img id="ingredients-image-preview" class="img-fluid d-none" alt="Ingredients Preview">
+                        </div>
+                        <button type="submit" class="btn analyze-button secondary" data-loading-text="Analyzing Image...">
+                            <i class="fas fa-magic"></i> Analyze Ingredients via OCR
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        {# Option 2: Paste Text #}
+        <div class="accordion-item">
+            <h2 class="accordion-header" id="headingPasteText">
+                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapsePasteText" aria-expanded="false" aria-controls="collapsePasteText">
+                    <i class="fas fa-paste me-2"></i> Alternative: Paste Ingredients Text
+                </button>
+            </h2>
+            <div id="collapsePasteText" class="accordion-collapse collapse" aria-labelledby="headingPasteText" data-bs-parent="#secondaryScanOptions">
+                <div class="accordion-body">
+                     <p class="text-muted small mb-3">Alternatively, copy and paste the ingredients text directly into the field below.</p>
+                    <form id="paste-form" method="post" action="{% url 'scan' %}" class="scan-form">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label for="text_input" class="form-label">Paste Ingredients Here:</label>
+                            <textarea class="form-control" id="text_input" name="text_input" rows="8"
+                                      placeholder="Example: Water, Sugar, Skim Milk Powder, Cocoa Mass, Wheat Flour, Vegetable Fats (Palm, Shea), Whey Powder (from Milk), Cocoa Butter, Milk Fat..."></textarea>
+                        </div>
+                        <button type="submit" class="btn analyze-button secondary" data-loading-text="Analyzing Text...">
+                            <i class="fas fa-search"></i>Analyze Pasted Text
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+    </div> {# End Accordion #}
+
+</div> {# End Scan Container #}
+{% endblock %}
+
+
+{% block extra_js %}
+<script>
+    // --- Image Preview Logic ---
+    document.getElementById('barcode_image').addEventListener('change', function(e) {
+        handleImagePreview(e, 'barcode-image-preview', 'barcode-preview-container');
+    });
+    document.getElementById('image').addEventListener('change', function(e) {
+        handleImagePreview(e, 'ingredients-image-preview', 'ingredients-preview-container');
+    });
+    function handleImagePreview(event, previewElementId, containerElementId) {
+        const preview = document.getElementById(previewElementId);
+        const container = document.getElementById(containerElementId);
+        const file = event.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                preview.src = e.target.result;
+                preview.classList.remove('d-none');
+                container.style.display = 'block';
+            }
+            reader.readAsDataURL(file);
+        } else {
+            preview.classList.add('d-none');
+            container.style.display = 'none';
+            preview.src = '';
+        }
+    }
+
+    // --- Loading Indicator Logic & Demo Button ---
+    document.addEventListener('DOMContentLoaded', function() {
+        const forms = document.querySelectorAll('form.scan-form'); // Select all forms with the class
+        const loadingOverlay = document.getElementById('loadingSpinner');
+
+        forms.forEach(form => {
+            form.addEventListener('submit', function() {
+                // Check if submitting via demo button before showing overlay
+                const scanModeInput = form.querySelector('#scan_mode');
+                if (!scanModeInput || scanModeInput.value !== 'demo') {
+                    // Only require file if it's a standard upload for the main form
+                    if (form.id === 'barcode-form' && form.querySelector('#barcode_image').files.length === 0) {
+                        // Don't show loading if no file selected for barcode form
+                        return;
+                    }
+                    // Add similar checks for other forms if needed
+                }
+                // If it's the demo scan or a valid upload, show the overlay
+                if (loadingOverlay) {
+                    loadingOverlay.classList.add('show');
+                }
+            });
+        });
+
+        // Demo button logic
+        const demoButton = document.getElementById('demo-scan-button');
+        const barcodeForm = document.getElementById('barcode-form');
+        const scanModeInput = document.getElementById('scan_mode');
+        const barcodeImageInput = document.getElementById('barcode_image');
+
+        if (demoButton && barcodeForm && scanModeInput && barcodeImageInput) {
+            demoButton.addEventListener('click', function() {
+                // Set the scan mode to 'demo'
+                scanModeInput.value = 'demo';
+                // Make the file input not required temporarily for form submission
+                barcodeImageInput.required = false;
+                // Clear any selected file to avoid confusion
+                barcodeImageInput.value = '';
+                // Hide preview if shown
+                handleImagePreview({ target: { files: [] } }, 'barcode-image-preview', 'barcode-preview-container');
+                // Submit the barcode form
+                barcodeForm.requestSubmit(); // Use requestSubmit for better compatibility
+                // Reset required attribute after submission is triggered
+                barcodeImageInput.required = true;
+            });
+        }
+    });
+</script>
+{% endblock %}

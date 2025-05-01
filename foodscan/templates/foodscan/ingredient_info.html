@@ -1,0 +1,53 @@
+{% extends 'foodscan/base.html' %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        {% if error %}
+            <div class="alert alert-danger">
+                {{ error }}
+            </div>
+        {% else %}
+            <div class="card">
+                <div class="card-body">
+                    <h1 class="card-title text-center mb-4">{{ ingredient.name }}</h1>
+                    
+                    <div class="mb-4">
+                        <h5>Description</h5>
+                        <p>{{ ingredient.description }}</p>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <h5>Health Impact</h5>
+                        <p>{{ ingredient.health_impact }}</p>
+                    </div>
+                    
+                    {% if ingredient.is_harmful %}
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            This ingredient may have negative health effects
+                        </div>
+                    {% endif %}
+                    
+                    {% if ingredient.alternatives %}
+                        <div class="mb-4">
+                            <h5>Healthier Alternatives</h5>
+                            <ul class="list-group">
+                                {% for alternative in ingredient.alternatives %}
+                                    <li class="list-group-item">{{ alternative }}</li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    {% endif %}
+                    
+                    <div class="text-center mt-4">
+                        <a href="{% url 'scan' %}" class="btn scan-button">
+                            <i class="fas fa-camera me-2"></i>Scan Another Product
+                        </a>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %} 

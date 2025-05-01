@@ -1,0 +1,644 @@
+{% extends 'foodscan/base.html' %}
+{% load static %}
+
+{% block navbar %}
+{# Override navbar block to remove it from index page #}
+{% endblock navbar %}
+
+{% block extra_css %}
+<style>
+    /* Base Styles from Example */
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    body {
+        background: #f8f9fa; /* Consistent background */
+        line-height: 1.6;
+        color: #4a5568; /* Example's default text color */
+    }
+
+    /* Hero Section - Matching Example Dimensions */
+    .hero {
+        background: linear-gradient(135deg, #56ab2f 0%, #a8e063 100%); /* Green Gradient */
+        color: white;
+        padding: 4rem 2rem; /* Example's padding */
+        text-align: center; /* Center text by default */
+        position: relative;
+        overflow: hidden;
+        /* Removed min-height: 100vh */
+    }
+
+    .hero-content {
+        max-width: 1000px; /* Max width for content inside hero */
+        margin: 0 auto;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 3rem; /* Example's gap */
+    }
+
+    .profile-image {
+        width: 150px; /* Example's size */
+        height: 150px;
+        border-radius: 50%;
+        overflow: hidden;
+        border: 4px solid rgba(255, 255, 255, 0.3);
+        box-shadow: 0 10px 30px rgba(86, 171, 47, 0.3); /* Green shadow */
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .profile-image:hover {
+        transform: scale(1.05);
+        box-shadow: 0 15px 35px rgba(86, 171, 47, 0.4); /* Darker green shadow on hover */
+    }
+
+    .profile-image img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .hero-text {
+        text-align: left;
+        max-width: 500px; /* Max width for text block */
+    }
+
+    .hero-text h1 {
+        font-size: 2.5rem; /* Example's size */
+        margin-bottom: 1rem;
+        font-weight: 700;
+        text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        line-height: 1.2;
+    }
+
+    .subtitle {
+        font-size: 1.1rem; /* Example's size */
+        margin-bottom: 2rem;
+        opacity: 0.95;
+        line-height: 1.6;
+    }
+
+    .cta-button {
+        display: inline-block;
+        background: #fff;
+        color: #56ab2f; /* Green text */
+        padding: 0.8rem 1.8rem; /* Example's padding */
+        border-radius: 50px;
+        text-decoration: none;
+        font-weight: 600;
+        font-size: 0.9rem; /* Example's size */
+        transition: all 0.3s ease;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    .cta-button:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        background: #f8fafc;
+    }
+
+    /* Container - Limiting width for content sections */
+    .container {
+        max-width: 1000px; /* Max width for content sections */
+        margin: 3rem auto; /* Center container, add top/bottom margin */
+        padding: 0 2rem; /* Add horizontal padding back */
+        position: relative;
+        z-index: 1;
+    }
+
+    /* Sections (Cards) - Matching Example Dimensions */
+    .card-section {
+        background: white;
+        border-radius: 8px; /* Example's radius */
+        padding: 2rem; /* Example's padding */
+        margin-bottom: 2rem; /* Example's margin between cards */
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05); /* Example's shadow */
+        border: 1px solid #e2e8f0; /* Example's subtle border */
+        /* Removed border-top added previously */
+    }
+    /* No need for .about-section { border-top: none; } anymore */
+
+    .section-header {
+        margin-bottom: 1.5rem; /* Example's margin */
+        padding-bottom: 1rem; /* Example's padding */
+        border-bottom: 1px solid #e2e8f0; /* Example's border */
+        display: flex;
+        align-items: center;
+        gap: 0.75rem; /* Example's gap */
+    }
+
+    .section-header h2 {
+        font-size: 1.5rem; /* Example's size */
+        color: #2d3748; /* Example's text color */
+        font-weight: 600; /* Example's weight */
+    }
+
+    .section-header i {
+        color: #56ab2f; /* Green Icon */
+        font-size: 1.5rem; /* Example's size */
+    }
+
+    /* About Section - Matching Example Dimensions */
+     .about-section p:first-of-type {
+        color: #4a5568;
+        margin-bottom: 1.5rem; /* Example's margin */
+        font-size: 1rem; /* Match example font size */
+        line-height: 1.7; /* Match example line height */
+     }
+
+    .tech-stack {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1.5rem; /* Example's gap */
+        margin: 1.5rem 0; /* Example's margin */
+    }
+
+    .tech-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        /* Removed background etc. as per previous step */
+        color: #4a5568;
+        font-size: 0.9rem; /* Example's size */
+    }
+
+     .tech-item i {
+        color: #56ab2f; /* Green Icon */
+        font-size: 1.2rem; /* Example's icon size */
+     }
+
+    .role-badges {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.75rem; /* Example's gap */
+        margin: 1.5rem 0; /* Example's margin */
+    }
+
+    .role-badge {
+        background: #edf2f7; /* Example's gray */
+        color: #4a5568;
+        padding: 0.4rem 0.9rem; /* Example's padding */
+        border-radius: 6px; /* Example's radius */
+        font-size: 0.85rem; /* Example's size */
+        font-weight: 500;
+    }
+
+    .linkedin-button {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        background: #0077b5; /* Example's color */
+        color: white;
+        padding: 0.75rem 1.5rem; /* Example's padding */
+        border-radius: 6px; /* Example's radius */
+        text-decoration: none;
+        font-weight: 500;
+        font-size: 0.9rem; /* Example's size */
+        transition: all 0.3s ease;
+        margin-top: 1rem; /* Example's margin */
+    }
+
+    .linkedin-button:hover {
+        background: #005f94; /* Example's hover */
+        color: white; /* Ensure text stays white */
+    }
+
+    /* Why Section - Matching Example Dimensions */
+    .scenario-card, .solution-card {
+        background: #f7fafc; /* Example's light gray */
+        border-radius: 8px; /* Example's radius */
+        padding: 1.5rem; /* Example's padding */
+        margin-top: 1.5rem; /* Example's margin */
+        border: 1px solid #e2e8f0; /* Example's border */
+    }
+
+     .scenario-card h3, .solution-card h3 {
+        font-size: 1.1rem; /* Example's size */
+        color: #2d3748;
+        margin-bottom: 1rem; /* Example's margin */
+        display: flex;
+        align-items: center;
+        gap: 0.75rem; /* Example's gap */
+        font-weight: 600;
+     }
+
+     .scenario-card h3 i {
+        color: #e53e3e; /* Example's red */
+        font-size: 1.1rem; /* Example's size */
+     }
+
+     .solution-card h3 i {
+        color: #38a169; /* Example's green */
+        font-size: 1.1rem; /* Example's size */
+     }
+
+     .scenario-card p, .solution-card p:first-of-type {
+        /* Target first p in solution card to match example */
+        color: #4a5568;
+        line-height: 1.7; /* Example's line height */
+        font-size: 0.95rem; /* Match example font size */
+     }
+
+    /* Features Grid - Matching Example Dimensions */
+    .features-grid {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr); /* Force 5 columns */
+        gap: 2rem; /* Example's feature gap */
+        margin-top: 2rem; /* Example's margin */
+    }
+
+    .feature-item {
+        background: transparent;
+        padding: 0;
+        border-radius: 0;
+        text-align: center;
+        transition: none;
+        border: none;
+    }
+
+    .feature-item i {
+        font-size: 2.2rem; /* Example's icon size */
+        color: #56ab2f; /* Green icons */
+        margin-bottom: 0.8rem; /* Example's margin */
+    }
+
+    .feature-item h4 {
+        color: #2d3748;
+        margin-bottom: 0.5rem; /* Example's margin */
+        font-size: 1rem; /* Example's size */
+        font-weight: 600;
+    }
+
+    .feature-item p {
+        font-size: 0.85rem; /* Example's size */
+        color: #718096; /* Example's lighter text */
+        line-height: 1.5;
+    }
+
+    /* Test Account Section - Matching Example Dimensions */
+     .test-account-section .section-description {
+        color: #4a5568;
+        margin-bottom: 1.5rem; /* Example's margin */
+        font-size: 1rem; /* Match example font size */
+     }
+
+    .credentials-container {
+        background: #f7fafc; /* Example's light gray */
+        padding: 1.5rem; /* Example's padding */
+        border-radius: 8px; /* Example's radius */
+        border: 1px solid #e2e8f0; /* Example's border */
+    }
+
+    .credential-item {
+        display: flex;
+        align-items: center;
+        gap: 1rem; /* Example's gap */
+        margin-bottom: 1rem; /* Example's margin */
+        padding: 1rem; /* Example's padding */
+        background: white;
+        border-radius: 6px; /* Example's radius */
+        box-shadow: 0 2px 4px rgba(0,0,0,0.04); /* Example's shadow */
+    }
+
+    .credential-item:last-child {
+        margin-bottom: 0;
+    }
+
+    .credential-icon {
+        width: 35px; /* Example's size */
+        height: 35px;
+        background: #f0f9eb; /* Light Green background */
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #56ab2f; /* Green icon */
+        font-size: 0.9rem; /* Example's size */
+    }
+
+    .credential-details {
+        flex-grow: 1;
+    }
+
+    .credential-label {
+        display: block;
+        color: #718096; /* Example's lighter gray label */
+        font-size: 0.8rem; /* Example's size */
+        margin-bottom: 0.25rem; /* Example's margin */
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .credential-value {
+        font-family: 'Courier New', Courier, monospace; /* Example's font */
+        color: #2d3748;
+        font-size: 0.95rem; /* Example's size */
+    }
+
+    .copy-button {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        background: #56ab2f; /* Green background */
+        color: white;
+        border: none;
+        padding: 0.5rem 1rem; /* Example's padding */
+        border-radius: 6px; /* Example's radius */
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-size: 0.85rem; /* Example's size */
+    }
+
+    .copy-button:hover {
+        background: #4a9428; /* Darker green */
+    }
+
+    .copy-button.copied {
+        background: #38a169; /* Success green */
+    }
+
+    .info-text {
+        margin-top: 1.5rem; /* Example's margin */
+        color: #718096;
+        font-size: 0.85rem; /* Example's size */
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        justify-content: flex-start;
+    }
+     .info-text i {
+         font-size: 1rem; /* Example's size */
+     }
+
+    /* Footer - Matching Example Dimensions */
+    footer {
+        background: #56ab2f; /* Green background */
+        color: white; /* White text for contrast */
+        padding: 1.5rem 2rem; /* Example's padding */
+        text-align: center;
+        border-top: 1px solid #cbd5e0; /* Example's border */
+        flex-shrink: 0;
+    }
+
+    .footer-content {
+        max-width: 1000px; /* Consistent width */
+        margin: 0 auto;
+        font-size: 0.9rem; /* Example's size */
+    }
+
+    .footer-content p {
+        margin: 0.3rem 0; /* Example's margin */
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem; /* Example's gap */
+    }
+     .footer-content .tech-mention {
+        font-weight: 600;
+        color: white; /* Ensure tech mention is also white */
+     }
+     .footer-content .fa-heart {
+         color: #e53e3e; /* Example's red heart */
+     }
+
+    /* Responsive Design - Adjusted to better match example */
+    @media (max-width: 992px) { /* Tablet */
+         .features-grid {
+            /* Allow wrapping */
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1.5rem;
+         }
+    }
+
+    @media (max-width: 768px) { /* Smaller Tablet / Large Phone */
+        .hero {
+            padding: 3rem 1.5rem; /* Example's padding */
+        }
+        .hero-content { flex-direction: column; gap: 2rem; }
+        .hero-text { text-align: center; }
+        .hero-text h1 { font-size: 2.2rem; }
+        .subtitle { font-size: 1rem; }
+        .profile-image { width: 120px; height: 120px; }
+        .container { padding: 0 1.5rem; margin: 2rem auto; }
+        .card-section { padding: 1.5rem; margin-bottom: 1.5rem; }
+        .features-grid { gap: 1rem; margin-top: 1.5rem;}
+        .feature-item h4 { font-size: 0.95rem;}
+        .feature-item p { font-size: 0.8rem; }
+    }
+
+    @media (max-width: 576px) { /* Small Phone */
+        .hero { padding: 2.5rem 1rem; }
+        .profile-image { width: 100px; height: 100px; }
+        .hero-text h1 { font-size: 1.8rem; }
+        .subtitle { font-size: 0.95rem; }
+        .cta-button { padding: 0.7rem 1.5rem; font-size: 0.85rem; }
+        .container { padding: 0 1rem; margin: 1.5rem auto; }
+        .section-header h2 { font-size: 1.2rem; }
+        .section-header i { font-size: 1.2rem; }
+        .about-section p:first-of-type { font-size: 0.9rem; }
+        .tech-stack, .role-badges { gap: 0.5rem; }
+        .tech-item, .role-badge { padding: 0.4rem 0.8rem; font-size: 0.8rem; }
+        .linkedin-button { padding: 0.6rem 1.2rem; font-size: 0.85rem; }
+        .scenario-card, .solution-card { padding: 1.25rem; }
+        .scenario-card h3, .solution-card h3 { font-size: 1rem; gap: 0.5rem; }
+        .scenario-card h3 i, .solution-card h3 i { font-size: 1rem; }
+        .scenario-card p, .solution-card p:first-of-type { font-size: 0.9rem; }
+        .features-grid { grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 1rem; }
+        .test-account-section .section-description { font-size: 0.9rem; }
+        .credential-item { flex-direction: column; align-items: flex-start; gap: 0.5rem; padding: 0.8rem; }
+        .credential-details { width: 100%; }
+        .copy-button { width: 100%; justify-content: center; margin-top: 0.5rem; padding: 0.6rem 1rem; font-size: 0.8rem; }
+        .info-text { font-size: 0.8rem; margin-top: 1rem; }
+        .footer-content { font-size: 0.8rem; }
+        .footer-content p { gap: 0.3rem; }
+    }
+
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="hero">
+    <div class="hero-content">
+        <div class="profile-image">
+            <img src="{% static 'foodscan/images/profile_pic.jpg' %}" alt="Sebastian Micu">
+        </div>
+        <div class="hero-text">
+            <h1>Understand Your Food with FoodScan</h1>
+            <p class="subtitle">Never worry about food ingredients again. Scan, analyze, and understand your food choices with AI-powered insights.</p>
+            <a href="{% url 'login' %}" class="cta-button">GET STARTED</a>
+        </div>
+    </div>
+</div>
+
+<main class="container">
+    <!-- About Me Section -->
+    <section class="card-section about-section">
+        <div class="section-header">
+            <i class="fas fa-user"></i>
+            <h2>About Me</h2>
+        </div>
+        <p>Hello! I'm Sebastian Micu, a passionate developer who created this project using:</p>
+
+        <div class="tech-stack">
+            <div class="tech-item">
+                <i class="fab fa-python"></i>
+                <span>Python Django</span>
+            </div>
+            <div class="tech-item">
+                <i class="fas fa-brain"></i>
+                <span>Gemini AI</span>
+            </div>
+            <div class="tech-item">
+                <i class="fas fa-shield-alt"></i> {# Using shield for security/auth #}
+                <span>Auth0 IAM</span>
+            </div>
+        </div>
+
+        <div class="role-badges">
+            <span class="role-badge">Python Developer</span>
+            <span class="role-badge">Auth0 (IAM) Specialist</span>
+            <span class="role-badge">AI Integration Specialist</span>
+            <span class="role-badge">Full Stack Developer</span>
+        </div>
+
+        <a href="https://linkedin.com/in/sebastianmicu" class="linkedin-button" target="_blank" rel="noopener noreferrer">
+            <i class="fab fa-linkedin"></i>
+            Connect on LinkedIn
+        </a>
+    </section>
+
+    <!-- Why This Matters Section -->
+    <section class="card-section why-section">
+        <div class="section-header">
+             <i class="fas fa-lightbulb"></i>
+             <h2>Why This Matters</h2>
+        </div>
+
+        <div class="scenario-card"> <!-- Corresponds to "The Common Problem" -->
+            <h3><i class="fas fa-exclamation-circle"></i> The Common Problem</h3>
+            <p>How often do you find yourself staring at confusing ingredient lists, unsure about additives, or worried about allergens? When trying to maintain specific dietary needs (like sugar-free or vegan), it's challenging to quickly determine if a product aligns with your health goals.</p>
+        </div>
+
+        <div class="solution-card"> <!-- Corresponds to "The Solution" -->
+            <h3><i class="fas fa-check-circle"></i> The Solution</h3>
+            <p>FoodScan helps you make informed decisions about your food, effortlessly. Our AI-powered platform offers:</p>
+             <!-- Features Grid - Inside Solution Card -->
+             <div class="features-grid">
+                <div class="feature-item">
+                    <i class="fas fa-camera"></i>
+                    <h4>Instant Scan</h4>
+                    <p>Scan product labels instantly</p>
+                </div>
+                <div class="feature-item">
+                    <i class="fas fa-robot"></i>
+                    <h4>AI Analysis</h4>
+                    <p>Get ingredient analysis and translations</p>
+                </div>
+                <div class="feature-item">
+                    <i class="fas fa-shield-alt"></i>
+                    <h4>Allergen Alerts</h4>
+                    <p>Identify potential allergens</p>
+                </div>
+                <div class="feature-item">
+                    <i class="fas fa-history"></i>
+                    <h4>Scan History</h4>
+                    <p>Track your scanned products</p>
+                </div>
+                <div class="feature-item"> {# New Feature #}
+                    <i class="fas fa-chart-line"></i> {# Icon for tracker/stats #}
+                    <h4>Calorie Tracker</h4>
+                    <p>Track calories, view history & stats</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Test Account Section -->
+    <section class="card-section test-account-section">
+        <div class="section-header">
+             <i class="fas fa-key"></i>
+             <h2>Test Account</h2>
+        </div>
+        <p class="section-description">Try out the application using these credentials:</p>
+
+        <div class="credentials-container">
+            <div class="credential-item">
+                <div class="credential-icon">
+                    <i class="fas fa-envelope"></i>
+                </div>
+                <div class="credential-details">
+                    <span class="credential-label">Email</span>
+                    <span class="credential-value">test@email.com</span>
+                </div>
+                <button class="copy-button" onclick="copyText('test@email.com', this)">
+                    <i class="fas fa-copy"></i>
+                    <span>Copy</span>
+                </button>
+            </div>
+
+            <div class="credential-item">
+                <div class="credential-icon">
+                    <i class="fas fa-key"></i>
+                </div>
+                <div class="credential-details">
+                    <span class="credential-label">Password</span>
+                    <span class="credential-value">test</span>
+                </div>
+                <button class="copy-button" onclick="copyText('test', this)">
+                    <i class="fas fa-copy"></i>
+                    <span>Copy</span>
+                </button>
+            </div>
+        </div>
+
+        <p class="info-text">
+            <i class="fas fa-info-circle"></i>
+            You can explore all features without using personal data
+        </p>
+    </section>
+</main>
+
+<script>
+// Script remains the same as the previous version which handles icon change
+function copyText(text, button) {
+    navigator.clipboard.writeText(text)
+        .then(() => {
+            const span = button.querySelector('span');
+            const icon = button.querySelector('i');
+            const originalText = span.textContent;
+            const originalIconClass = icon.className; // Store original icon class
+
+            span.textContent = 'Copied!';
+            icon.className = 'fas fa-check'; // Change icon to checkmark
+            button.classList.add('copied');
+
+            // Revert back after 2 seconds
+            setTimeout(() => {
+                span.textContent = originalText;
+                 icon.className = originalIconClass; // Restore original icon
+                button.classList.remove('copied');
+            }, 2000);
+        })
+        .catch(err => {
+            console.error('Failed to copy text: ', err);
+            // Provide user feedback for failure
+            const span = button.querySelector('span');
+             const originalText = span.textContent;
+             span.textContent = 'Error';
+             // Optionally change icon on error too
+             // const icon = button.querySelector('i');
+             // icon.className = 'fas fa-times';
+             setTimeout(() => {
+                 span.textContent = originalText;
+                 // if icon changed on error, revert it here too
+            }, 2000);
+        });
+}
+</script>
+{% endblock %}

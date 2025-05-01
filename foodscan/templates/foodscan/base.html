@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FoodScan - AI-Powered Ingredient Scanner</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    {# --- FullCalendar CSS --- #}
+    <link href='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css' rel='stylesheet' />
+    {% block extra_css %}{% endblock %}
+    <style>
+        /* Add body flex styles for sticky footer */
+        html, body {
+            height: 100%;
+        }
+        body {
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh; /* Ensure body takes full viewport height */
+        }
+        .navbar {
+            background-color: #56ab2f; /* Match footer green */
+        }
+        .navbar-brand, .nav-link {
+            color: white !important;
+        }
+        .main-content {
+            padding: 20px;
+        }
+        .scan-button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 18px;
+        }
+        .scan-button:hover {
+            background-color: #45a049;
+        }
+        .user-info {
+            color: white;
+            margin-right: 15px;
+        }
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(255, 255, 255, 0.7);
+            z-index: 9999; /* Ensure it's on top */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            visibility: hidden; /* Hidden by default */
+            opacity: 0;
+            transition: opacity 0.3s ease-in-out;
+            flex-direction: column; /* Stack spinner and text vertically */
+        }
+        .loading-overlay.show {
+            visibility: visible;
+            opacity: 1;
+        }
+        .loading-overlay .spinner-border {
+             /* Keep this rule commented or remove it if not using spinner */
+             /* width: 3.5rem; */
+             /* height: 3.5rem; */
+             /* margin-bottom: 15px; */
+             display: none; /* Hide original spinner */
+        }
+        .loading-overlay .loading-robot { /* Style for the robot emoji */
+            font-size: 5rem; /* Make the emoji large */
+            margin-bottom: 20px;
+            display: block; /* Ensure it takes its own line */
+            text-align: center;
+            animation: pulse 1.5s infinite ease-in-out; /* Add a subtle animation */
+        }
+        .loading-overlay .loading-text {
+            font-size: 1.2rem; /* Slightly larger text */
+            font-weight: 500;
+            color: #333; /* Darker text for better contrast */
+            text-align: center; /* Center the text */
+            padding: 0 15px; /* Add padding for smaller screens */
+        }
+        /* Optional: Style calendar events */
+        .fc-event {
+            background-color: #28a745; /* Green background for events */
+            border-color: #28a745;
+            color: white;
+            padding: 2px 4px;
+            font-size: 0.8em;
+        }
+        .fc-daygrid-day-number { /* Make day numbers more visible */
+            font-weight: 500;
+        }
+    </style>
+    {# --- START: Mobile Navbar Improvements --- #}
+    <style>
+        @media (max-width: 991.98px) { /* Bootstrap 5 lg breakpoint */
+            .navbar-collapse {
+                background-color: #56ab2f; /* Ensure background color persists */
+                padding: 1rem; /* Add padding around the collapsed items */
+                border-radius: 0 0 8px 8px; /* Optional: round bottom corners */
+                box-shadow: 0 4px 8px rgba(0,0,0,0.1); /* Optional: add shadow */
+            }
+            .navbar-nav .nav-item {
+                margin-bottom: 0.5rem; /* Add space between items */
+            }
+            .navbar-nav .nav-link {
+                padding: 0.75rem 1rem; /* Increase padding within links */
+                border-radius: 6px; /* Optional: round corners for links */
+                display: flex; /* Ensure icon and text alignment */
+                align-items: center;
+            }
+            .navbar-nav .nav-link:hover,
+            .navbar-nav .nav-link:focus {
+                background-color: rgba(255, 255, 255, 0.1); /* Subtle hover effect */
+            }
+             .navbar-nav .nav-link i {
+                 width: 20px; /* Ensure consistent icon width */
+                 text-align: center; /* Center icon if needed */
+             }
+            .navbar-dark .navbar-toggler {
+                border-color: rgba(255,255,255,.2); /* Slightly more visible toggler border */
+            }
+            .navbar-dark .navbar-toggler-icon {
+                 background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba%28255, 255, 255, 0.8%29' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e"); /* Brighter icon */
+            }
+        }
+        /* Add pulse animation */
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+    </style>
+    {# --- END: Mobile Navbar Improvements --- #}
+</head>
+<body>
+    {# Loading Overlay with Robot Emoji and Text #}
+    <div id="loadingSpinner" class="loading-overlay">
+        {# Replace spinner with robot emoji #}
+        <div class="loading-robot">🤖</div>
+        {# Updated loading text #}
+        <div class="loading-text">AI is analyzing the ingredients... This might take 10-15 seconds. Please wait!</div>
+    </div>
+
+    {% block navbar %}
+    {% include 'foodscan/navbar.html' %}
+    {% endblock navbar %}
+
+    {# Main content wrapper for sticky footer #}
+    <div class="main-content-wrapper" style="flex: 1 0 auto;">
+        {# Django Messages Display #}
+        {% if messages %}
+            <div class="container mt-3">
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                        {# Add icons based on tags - optional but nice #}
+                        {% if message.tags == 'error' %}<i class="fas fa-times-circle me-2"></i>
+                        {% elif message.tags == 'warning' %}<i class="fas fa-exclamation-triangle me-2"></i>
+                        {% elif message.tags == 'success' %}<i class="fas fa-check-circle me-2"></i>
+                        {% elif message.tags == 'info' %}<i class="fas fa-info-circle me-2"></i>
+                        {% endif %}
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        {% block content %}
+        {% endblock %}
+
+    </div> {# End of main-content-wrapper #}
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    {# --- FullCalendar JS --- #}
+    <script src='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js'></script>
+
+    {% block extra_js %}
+    {% endblock %}
+    <script>
+        // Auto-dismiss alerts after 3 seconds
+        document.addEventListener('DOMContentLoaded', (event) => {
+            const alerts = document.querySelectorAll('.alert.alert-dismissible');
+            alerts.forEach(function(alert) {
+                setTimeout(function() {
+                    const alertInstance = bootstrap.Alert.getOrCreateInstance(alert);
+                    if (alertInstance) {
+                        alertInstance.close();
+                    }
+                }, 3000);
+            });
+        });
+    </script>
+
+    {% block footer %}
+    <footer style="background: #56ab2f; color: white; padding: 1.5rem 2rem; text-align: center; border-top: 1px solid #cbd5e0; flex-shrink: 0;">
+        <div class="footer-content" style="max-width: 1000px; margin: 0 auto; font-size: 0.9rem;">
+            <p style="margin: 0.3rem 0; display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
+                <i class="fas fa-code"></i> Developed by Sebastian Micu
+            </p>
+            <p style="margin: 0.3rem 0; display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
+                Powered by <span style="font-weight: 600; color: white;">Django</span> and <span style="font-weight: 600; color: white;">Gemini AI</span> <i class="fas fa-heart" style="color: #e53e3e;"></i>
+            </p>
+        </div>
+    </footer>
+    {% endblock footer %}
+
+</body>
+</html>

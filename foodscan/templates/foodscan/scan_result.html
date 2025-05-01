@@ -1,0 +1,621 @@
+{% extends 'foodscan/base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8 col-md-10">
+            <div class="card mb-4 shadow-sm overflow-hidden">
+                <div class="card-header d-flex justify-content-center align-items-center bg-white border-bottom py-2 px-3">
+                    <h5 class="my-0 fw-normal text-center">{% firstof product_name 'Scan Results' %}</h5>
+                    {% if barcode %}
+                        <span class="badge bg-light text-dark border ms-2">Barcode: {{ barcode }}</span>
+                    {% endif %}
+                </div>
+                <div class="card-body p-4">
+                    {# Display product image if available #}
+                    {% if product_image_url %}
+                    <div class="text-center mb-4">
+                        <img src="{{ product_image_url }}" alt="{{ product_name|default:'Product Image' }}" class="img-fluid rounded product-image" style="max-height: 180px; max-width: 100%; object-fit: contain; border: 1px solid #dee2e6;">
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Health Score -->
+                    <div class="health-score-container text-center mb-4">
+                        <h6 class="fw-semibold text-secondary mb-3 heading-with-icon justify-content-center"><i class="bi bi-graph-up me-2"></i>Health Score</h6>
+                        <div class="score-display position-relative d-inline-block">
+                            <svg width="120" height="120" viewBox="0 0 150 150" class="score-chart">
+                                <circle cx="75" cy="75" r="60" fill="none" stroke="#e9ecef" stroke-width="15"/>
+                                <circle cx="75" cy="75" r="60" fill="none" 
+                                        {% if result.score < 25 %}
+                                            stroke="#dc3545" 
+                                        {% elif result.score < 50 %}
+                                            stroke="#ffc107" 
+                                        {% elif result.score < 75 %}
+                                            stroke="#17a2b8" 
+                                        {% else %}
+                                            stroke="#28a745"
+                                        {% endif %}
+                                        stroke-width="15" 
+                                        stroke-dasharray="376.8" 
+                                        stroke-dashoffset="{{ stroke_dashoffset }}" 
+                                        transform="rotate(-90 75 75)"
+                                        style="transition: stroke-dashoffset 0.8s ease-in-out;" />
+                                <text x="75" y="85" text-anchor="middle" font-size="38" font-weight="bold" 
+                                      {% if result.score < 25 %}
+                                          class="text-danger"
+                                      {% elif result.score < 50 %}
+                                          class="text-warning"
+                                      {% elif result.score < 75 %}
+                                          class="text-info"
+                                      {% else %}
+                                          class="text-success"
+                                      {% endif %}>
+                                    {{ result.score }}
+                                </text>
+                            </svg>
+                            
+                            <div class="score-interpretation mt-2">
+                                {% if result.score < 25 %}
+                                    <span class="badge bg-danger py-1 px-2">Poor</span>
+                                {% elif result.score < 50 %}
+                                    <span class="badge bg-warning text-dark py-1 px-2">Fair</span>
+                                {% elif result.score < 75 %}
+                                    <span class="badge bg-info text-dark py-1 px-2">Good</span>
+                                {% else %}
+                                    <span class="badge bg-success py-1 px-2">Excellent</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="score-explanation mt-3">
+                            <div class="d-flex justify-content-center gap-3 mb-2">
+                                <div class="score-range d-flex align-items-center">
+                                    <span class="score-dot bg-danger me-1"></span>
+                                    <small>0-24: Poor</small>
+                                </div>
+                                <div class="score-range d-flex align-items-center">
+                                    <span class="score-dot bg-warning me-1"></span>
+                                    <small>25-49: Fair</small>
+                                </div>
+                                <div class="score-range d-flex align-items-center">
+                                    <span class="score-dot bg-info me-1"></span>
+                                    <small>50-74: Good</small>
+                                </div>
+                                <div class="score-range d-flex align-items-center">
+                                    <span class="score-dot bg-success me-1"></span>
+                                    <small>75-100: Excellent</small>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <p class="text-muted mt-2 fst-italic small health-reminder">Remember: Consume processed foods in moderation, regardless of the score.</p>
+                    </div>
+                    <hr class="my-4 section-divider">
+
+                    {# --- Nutritional Information Section --- #}
+                    {% if formatted_nutrients %}
+                    <div class="nutritional-info-section mb-4">
+                        <h6 class="fw-semibold text-secondary mb-3 heading-with-icon"><i class="bi bi-clipboard-data me-2"></i>Nutritional Information <small class="fw-normal">(per 100g)</small></h6>
+                        <div class="table-responsive nutrition-table">
+                            <table class="table table-sm table-striped table-borderless mb-1">
+                                <tbody>
+                                {% for nutrient in formatted_nutrients %}
+                                    <tr>
+                                        <td class="ps-0">
+                                            {{ nutrient.label }}
+                                            {% if nutrient.sub_info %}
+                                                <small class="text-muted ms-1">{{ nutrient.sub_info }}</small>
+                                            {% endif %}
+                                        </td>
+                                        <td class="text-end pe-0"><strong>{{ nutrient.value }}{{ nutrient.unit }}</strong></td>
+                                    </tr>
+                                {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        <small class="text-muted d-block mt-1 small nutrition-disclaimer">Data source may vary (database/OCR). Verify if critical.</small>
+                    </div>
+                    <hr class="my-4 section-divider">
+                    {% endif %}
+                    {# --- End Nutritional Information Section --- #}
+
+                    <!-- Warnings Section (Collapsible) -->
+                    {% if result.warnings %}
+                    <div class="warnings-section mb-4">
+                        <h6 class="fw-semibold text-secondary mb-3 heading-with-icon"><i class="bi bi-exclamation-diamond me-2"></i>Warnings</h6>
+                        <div class="list-group list-group-flush">
+                            {% for warning in result.warnings %}
+                                {% if warning.type == 'user_allergen_match' %}
+                                    {# Allergen warnings - red alert with triangle icon #}
+                                    <div class="warning-item warning-important mb-3">
+                                        <div class="warning-header d-flex align-items-start">
+                                            <div class="warning-icon text-danger me-2">
+                                                <i class="bi bi-exclamation-triangle-fill"></i>
+                                            </div>
+                                            <div class="warning-content">
+                                                <span class="fw-bold">IMPORTANT:</span> {{ warning.message }}
+                                            </div>
+                                        </div>
+                                    </div>
+                                {% else %} {# Other warning types - yellow with circle icon #}
+                                    <div class="warning-item warning-normal mb-3">
+                                        <div class="warning-header d-flex align-items-center">
+                                            <div class="warning-icon text-warning me-2">
+                                                <i class="bi bi-exclamation-circle-fill"></i>
+                                            </div>
+                                            <div class="warning-title flex-grow-1">
+                                                {{ warning.short_title|default:"Warning" }}
+                                            </div>
+                                            <a class="warning-toggle collapsed" 
+                                               data-bs-toggle="collapse" 
+                                               href="#warning-{{ forloop.counter }}" 
+                                               role="button" 
+                                               aria-expanded="false" 
+                                               aria-controls="warning-{{ forloop.counter }}">
+                                                <i class="bi bi-chevron-down"></i>
+                                            </a>
+                                        </div>
+                                        <div class="collapse warning-body" id="warning-{{ forloop.counter }}">
+                                            <div class="warning-details pt-2 mt-2">
+                                                {{ warning.message }}
+                                            </div>
+                                        </div>
+                                    </div>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <hr class="my-4 section-divider">
+                    {% endif %}
+                    <!-- End Warnings Section -->
+
+                    <!-- Ingredients Section -->
+                    <div class="ingredients-section mb-4">
+                        <h6 class="fw-semibold text-secondary mb-3 heading-with-icon"><i class="bi bi-list-ul me-2"></i>Ingredients</h6>
+                        <ul class="list-group list-group-flush ingredients-list">
+                            {% for ingredient in result.ingredients %}
+                                <li class="list-group-item px-0 py-2 ingredient-item">
+                                    {# Use flexbox for better alignment #}
+                                    <div class="d-flex justify-content-between align-items-start"> 
+                                        <div class="me-3 ingredient-name"> {# Margin for spacing #}
+                                            {% with english_name=ingredient.info.english_name|default:ingredient.name %}
+                                                <span class="badge me-1 small ingredient-badge
+                                                    {% if ingredient.status == 'good' %}bg-success
+                                                    {% elif ingredient.status == 'bad' %}bg-danger
+                                                    {% elif ingredient.status == 'caution' %}bg-warning text-dark
+                                                    {% else %}bg-secondary{% endif %}
+                                                ">
+                                                    {{ ingredient.status|capfirst }}
+                                                </span>
+                                                {{ english_name|capfirst }}
+                                                {% if english_name != ingredient.name %}
+                                                    <small class="text-muted original-name">({{ ingredient.name }})</small>
+                                                {% endif %}
+                                            {% endwith %}
+                                        </div>
+                                        <button class="btn btn-sm btn-outline-secondary ms-auto py-0 px-1 flex-shrink-0 info-button" {# Use ms-auto #}
+                                                type="button" 
+                                                data-bs-toggle="collapse" 
+                                                data-bs-target="#ingredient-info-{{ forloop.counter }}" 
+                                                aria-expanded="false" 
+                                                aria-controls="ingredient-info-{{ forloop.counter }}">
+                                            <i class="bi bi-info-lg"></i>
+                                        </button>
+                                    </div>
+                                    <div class="collapse mt-2" id="ingredient-info-{{ forloop.counter }}">
+                                      <div class="card card-body small bg-light border-0 py-1 px-2 rounded-1 ingredient-details">
+                                        <p class="mb-1"><strong>Description:</strong> {{ ingredient.info.description|default:'N/A' }}</p>
+                                        <p class="mb-0"><strong>Health Impact:</strong> {{ ingredient.info.impact|default:'N/A' }}</p>
+                                      </div>
+                                    </div>
+                                </li>
+                            {% empty %}
+                                <li class="list-group-item px-0 text-muted">No ingredients identified.</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    <hr class="my-4 section-divider">
+                    <!-- End Ingredients Section -->
+
+                    {# --- Conditional Form to Upload Ingredients Image --- #}
+                    {% if ingredients_missing_from_off %}
+                    <div class="upload-ingredients-section card card-body bg-light border mb-4">
+                        <h5 class="card-title text-danger">Ingredients List Missing</h5>
+                        <p>We found the product via barcode, but the ingredients list wasn't available in the database.</p>
+                        
+                        {# Option 1: Upload Image #}
+                        <p class="mt-3"><strong>Option 1: Upload a clear photo of the ingredients list:</strong></p>
+                        <form method="post" enctype="multipart/form-data" action="{% url 'scan' %}" class="scan-form mb-3">
+                            {% csrf_token %}
+                            <input type="hidden" name="original_scan_id" value="{{ scan_id }}">
+                            <div class="mb-3">
+                                <label for="image" class="form-label visually-hidden">Upload Image of Ingredients</label>
+                                <input type="file" class="form-control" id="image" name="image" accept="image/*" required>
+                            </div>
+                            <div class="mb-3">
+                                <div class="image-preview-container" id="ingredients-preview-container">
+                                    <img id="ingredients-image-preview" class="img-fluid d-none" alt="Ingredients Preview">
+                                </div>
+                            </div>
+                            <div class="d-grid">
+                                <button type="submit" class="btn btn-warning w-100">
+                                    <i class="fas fa-magic me-2"></i> Analyze Uploaded Ingredients (OCR)
+                                </button>
+                            </div>
+                        </form>
+                        
+                        <p class="text-center my-3 fw-bold">OR</p>
+                        
+                        {# Option 2: Paste Text #}
+                         <p><strong>Option 2: Paste the ingredients text here:</strong></p>
+                         <form method="post" action="{% url 'scan' %}">
+                            {% csrf_token %}
+                            <input type="hidden" name="original_scan_id" value="{{ scan_id }}">
+                            <div class="mb-3">
+                                <label for="text_input" class="form-label visually-hidden">Paste Ingredients Here:</label>
+                                <textarea class="form-control" id="text_input" name="text_input" rows="6" 
+                                          placeholder="Example: Ingredients: Water, Sugar, Skim Milk Powder, ..." required></textarea>
+                            </div>
+                            <button type="submit" class="btn btn-secondary w-100">
+                                <i class="fas fa-search me-2"></i>Analyze Pasted Text
+                            </button>
+                        </form>
+                    </div>
+                    <hr class="my-4 section-divider">
+                    {% endif %}
+
+                    <!-- Extracted Text (Editable) Section -->
+                    <div class="text-section mt-4 {% if ingredients_missing_from_off %}d-none{% endif %} ">
+                        <h6 class="fw-semibold text-secondary mb-3 heading-with-icon"><i class="bi bi-file-text me-2"></i>Extracted Text (Editable)</h6>
+                        <form method="post" action="{% url 'scan' %}">
+                            {% csrf_token %}
+                            <input type="hidden" name="original_scan_id" value="{{ scan_id }}">
+                            <div class="extracted-text mb-3">
+                                <textarea class="form-control extracted-text-area" name="edited_text" rows="6" 
+                                          aria-label="Editable Extracted Text" 
+                                          {% if ingredients_missing_from_off %}disabled{% endif %}>{{ result.text }}</textarea>
+                            </div>
+                            <div class="d-flex justify-content-start gap-2 mt-2 action-buttons">
+                                <button type="submit" class="btn btn-secondary btn-sm" {% if ingredients_missing_from_off %}disabled{% endif %}>
+                                    <i class="bi bi-arrow-repeat me-1"></i> Rescan with Edited Text
+                                </button>
+                                <a href="{% url 'scan' %}" class="btn btn-primary btn-sm"><i class="bi bi-camera me-1"></i> Scan Another</a>
+                                <a href="{% url 'history' %}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-clock-history me-1"></i> View History</a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                {# --- Debug Information Section (in footer) --- #}
+                {% if debug_nutritional_json %}
+                <div class="card-footer bg-light">
+                    <p class="mb-0">
+                        <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#debugNutritionalData" aria-expanded="false" aria-controls="debugNutritionalData">
+                            <i class="fas fa-bug me-1"></i> Show Raw Nutritional Data (Debug)
+                        </button>
+                    </p>
+                    <div class="collapse mt-2" id="debugNutritionalData">
+                        <pre class="bg-dark text-light p-3 rounded" style="max-height: 200px; overflow-y: auto;"><code>{{ debug_nutritional_json }}</code></pre>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+{# Add script for the new image preview if not already generic #}
+<script>
+    // Generic image preview handler (assuming it exists from previous step)
+    // Ensure it handles 'ingredients-image-preview' and 'ingredients-preview-container'
+    if (document.getElementById('image')) {
+        document.getElementById('image').addEventListener('change', function(e) {
+             // Check if the generic handler exists, otherwise implement basic preview here
+             if (typeof handleImagePreview === 'function') {
+                handleImagePreview(e, 'ingredients-image-preview', 'ingredients-preview-container');
+             } else {
+                 // Basic fallback preview if generic handler missing
+                 const preview = document.getElementById('ingredients-image-preview');
+                 const container = document.getElementById('ingredients-preview-container');
+                 const file = e.target.files[0];
+                 if (file) {
+                     const reader = new FileReader();
+                     reader.onload = function(e) { preview.src = e.target.result; preview.classList.remove('d-none'); if(container) container.style.display = 'block'; }
+                     reader.readAsDataURL(file);
+                 } else {
+                     preview.classList.add('d-none'); if(container) container.style.display = 'none'; preview.src = '';
+                 }
+             }
+        });
+    }
+
+    // Initialize tooltips (Important if you still use them elsewhere)
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl)
+    })
+    
+    // Add animation to health score on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        setTimeout(function() {
+            const scoreChart = document.querySelector('.score-chart');
+            if (scoreChart) {
+                scoreChart.classList.add('animated');
+            }
+        }, 300);
+    });
+</script>
+
+<style>
+    /* Base styles */
+    body {
+        background-color: #f8f9fa; 
+    }
+    .card {
+        border: none;
+        border-radius: 0.5rem;
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+        transition: all 0.3s ease;
+    }
+    .card:hover {
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+    }
+    h4, h5 {
+        font-weight: 600;
+        color: #495057;
+    }
+    .text-muted {
+        color: #6c757d !important;
+    }
+    
+    /* Header styling */
+    .heading-with-icon {
+        display: flex;
+        align-items: center;
+        color: #2c3e50;
+        font-weight: 600;
+        margin-bottom: 1rem;
+        padding-bottom: 0.3rem;
+        border-bottom: 2px solid rgba(0,0,0,0.05);
+    }
+    
+    /* Section dividers */
+    .section-divider {
+        opacity: 0.1;
+        margin-top: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+
+    /* Health Score section */
+    .health-score-container {
+        margin-bottom: 0;
+        padding-bottom: 0; 
+        border-bottom: none;
+    }
+    .score-chart {
+        filter: drop-shadow(0px 4px 6px rgba(0, 0, 0, 0.1));
+        transition: transform 0.3s ease;
+    }
+    .score-chart:hover {
+        transform: scale(1.05);
+    }
+    .score-chart.animated circle:nth-child(2) {
+        animation: progress 1.5s ease-out forwards;
+    }
+    @keyframes progress {
+        0% {
+            stroke-dashoffset: 376.8;
+        }
+    }
+    .score-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        display: inline-block;
+    }
+    .score-range {
+        font-size: 0.75rem;
+        color: #6c757d;
+    }
+    .score-interpretation {
+        position: absolute;
+        bottom: -8px;
+        left: 0;
+        right: 0;
+    }
+    .score-interpretation .badge {
+        font-size: 0.75rem;
+        padding: 0.25em 0.75em;
+        border-radius: 1rem;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .health-reminder {
+        font-style: italic;
+        background-color: rgba(0,0,0,0.03);
+        padding: 0.5rem;
+        border-radius: 0.25rem;
+        border-left: 3px solid #6c757d;
+        max-width: 500px;
+        margin: 0 auto;
+    }
+    
+    /* Nutritional Information section */
+    .nutritional-info-section {
+        margin-bottom: 0;
+        padding-bottom: 0; 
+        border-bottom: none;
+    }
+    .nutrition-table {
+        border-radius: 0.25rem;
+        overflow: hidden;
+        box-shadow: 0 0 0.5rem rgba(0,0,0,0.05);
+    }
+    .nutritional-info-section .table-striped > tbody > tr:nth-of-type(odd) > * {
+        background-color: rgba(0,0,0,0.02);
+    }
+    .nutritional-info-section .table tr:hover > * {
+        background-color: rgba(0,0,0,0.04);
+    }
+    .nutrition-disclaimer {
+        font-style: italic;
+        text-align: center;
+        margin-top: 0.5rem;
+    }
+    
+    /* Warnings section */
+    .warnings-section {
+        margin-bottom: 0;
+        padding-bottom: 0; 
+        border-bottom: none;
+    }
+    
+    /* Warning items styling */
+    .warning-item {
+        border-radius: 0.25rem;
+        overflow: hidden;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .warning-item:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 0.25rem 0.5rem rgba(0, 0, 0, 0.05);
+    }
+    
+    /* Important warnings (allergens) */
+    .warning-important {
+        background-color: rgba(220, 53, 69, 0.1);
+        border-left: 4px solid #dc3545;
+        padding: 0.8rem 1rem;
+    }
+    .warning-important .warning-icon {
+        font-size: 1.1rem;
+    }
+    
+    /* Normal warnings (collapsible) */
+    .warning-normal {
+        background-color: rgba(255, 193, 7, 0.1);
+        border-left: 4px solid #ffc107;
+    }
+    .warning-normal .warning-header {
+        padding: 0.8rem 1rem;
+        cursor: pointer;
+    }
+    .warning-normal .warning-title {
+        font-weight: 600;
+        color: #212529;
+    }
+    .warning-normal .warning-icon {
+        font-size: 1.1rem;
+    }
+    
+    /* Toggle button and icon */
+    .warning-toggle {
+        color: #6c757d;
+        text-decoration: none;
+        transition: transform 0.3s ease;
+    }
+    .warning-toggle:not(.collapsed) {
+        transform: rotate(180deg);
+    }
+    
+    /* Warning details (collapsible content) */
+    .warning-details {
+        padding: 0 1rem 0.8rem 2.2rem;
+        color: #495057;
+        font-size: 0.9rem;
+        border-top: 1px solid rgba(0,0,0,0.05);
+    }
+
+    /* Ingredients section */
+    .ingredients-section {
+        margin-bottom: 0;
+        padding-bottom: 0; 
+        border-bottom: none;
+    }
+    .ingredients-list .list-group-item {
+        padding-left: 0;
+        padding-right: 0; 
+        border: none; 
+        background: transparent;
+        transition: background-color 0.2s ease;
+    }
+    .ingredients-list .list-group-item:hover {
+        background-color: rgba(0,0,0,0.02);
+        border-radius: 0.25rem;
+    }
+    .ingredient-item {
+        margin-bottom: 0.25rem;
+    }
+    .ingredient-badge {
+        font-size: 0.75em;
+        padding: 0.25em 0.5em;
+        border-radius: 3px;
+        margin-right: 0.5rem;
+        display: inline-block;
+        min-width: 50px;
+        text-align: center;
+    }
+    .ingredient-name {
+        font-weight: 500;
+    }
+    .original-name {
+        font-style: italic;
+    }
+    .info-button {
+        border-radius: 50%;
+        width: 24px;
+        height: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0;
+        transition: all 0.2s ease;
+    }
+    .info-button:hover {
+        background-color: #6c757d;
+        color: white;
+    }
+    .ingredient-details {
+        background-color: #f8f9fa !important;
+        border-left: 3px solid #6c757d !important;
+    }
+
+    /* Extracted text section */
+    .extracted-text-area {
+        font-family: monospace;
+        font-size: 0.85em;
+        line-height: 1.4;
+        white-space: pre-wrap;
+        word-wrap: break-word;
+        background-color: #f8f9fa;
+        border: 1px solid #ced4da;
+        border-radius: 0.25rem;
+        transition: border-color 0.2s ease;
+    }
+    .extracted-text-area:focus {
+        border-color: #86b7fe;
+        box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+    }
+    .action-buttons .btn {
+        transition: all 0.2s ease;
+    }
+    .action-buttons .btn:hover {
+        transform: translateY(-2px);
+    }
+
+    /* Product image */
+    .product-image {
+        transition: transform 0.3s ease;
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    }
+    .product-image:hover {
+        transform: scale(1.03);
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+    }
+
+    /* Collapse transition */
+    .collapse {
+        transition: height 0.3s ease;
+    }
+</style>
+{% endblock %} 

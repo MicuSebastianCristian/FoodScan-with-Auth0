@@ -1,0 +1,462 @@
+{% extends 'foodscan/base.html' %}
+
+{% block extra_css %}
+<style>
+    /* Styles from scan.html/home.html for consistency */
+    .history-header {
+        padding: 3rem 1rem;
+        text-align: center;
+        background: #f8f9fa; 
+        border-bottom: 1px solid #e2e8f0; 
+    }
+    .history-header h1 {
+        font-size: 2.5rem;
+        font-weight: 600;
+        color: #2d3748;
+        margin-bottom: 0.5rem;
+    }
+    .history-header p {
+        font-size: 1.1rem;
+        color: #718096;
+        max-width: 700px;
+        margin: 0 auto;
+    }
+    .search-form-container {
+        padding: 1.5rem;
+        background-color: #f8f9fa;
+        border-radius: 8px;
+        margin-bottom: 2rem;
+        border: 1px solid #e2e8f0;
+    }
+    .table th {
+        font-weight: 600;
+    }
+    .product-image {
+        width: 40px;
+        height: 40px;
+        object-fit: contain;
+        margin-right: 1rem;
+    }
+    .product-image-placeholder {
+        width: 40px;
+        height: 40px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background-color: #e9ecef;
+        color: #6c757d;
+        border-radius: 4px;
+        margin-right: 1rem;
+    }
+    .health-score-bar {
+        height: 10px;
+        border-radius: 5px; /* Rounded corners for the bar */
+        background-color: #e9ecef; /* Light gray background for the track */
+    }
+    .health-score-value {
+        font-weight: 700;
+        font-size: 1.1em;
+        min-width: 30px; /* Ensure space for the number */
+        text-align: right;
+    }
+    .view-details-btn {
+        white-space: nowrap;
+    }
+    .details-card {
+        background-color: #f8f9fa; /* Light background for details */
+        border: none;
+        border-radius: 6px;
+    }
+    .extracted-text {
+        max-height: 150px;
+        overflow-y: auto;
+        white-space: pre-wrap;
+        word-wrap: break-word;
+        font-size: 0.9em;
+        line-height: 1.4;
+        background-color: white;
+        border: 1px solid #dee2e6;
+        border-radius: 4px;
+    }
+    .ingredient-badge {
+        font-size: 0.85em;
+        padding: 0.4em 0.7em;
+    }
+    .pagination .page-link {
+        color: #56ab2f; /* Green pagination links */
+    }
+    .pagination .page-item.active .page-link {
+        background-color: #56ab2f;
+        border-color: #56ab2f;
+        color: white;
+    }
+    .pagination .page-link:focus {
+        box-shadow: 0 0 0 0.25rem rgba(86, 171, 47, 0.25); /* Green focus ring */
+    }
+    /* Add styles for alert-sm */
+    .alert-sm {
+        padding: 0.5rem 1rem;
+        font-size: 0.875em;
+        margin-bottom: 0.5rem !important;
+    }
+    
+    /* Responsive Styles for Table on Small Screens */
+    @media screen and (max-width: 767px) {
+        .table-responsive {
+            border: none; /* Remove border added by default responsive */
+        }
+        .table thead {
+            display: none; /* Hide table header */
+        }
+        .table tbody tr {
+            display: block;
+            margin-bottom: 1rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            background-color: #fff; /* White background for each 'card' */
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        .table tbody td {
+            display: block;
+            text-align: right; /* Align content to the right */
+            padding-top: 0.75rem;
+            padding-bottom: 0.75rem;
+            padding-right: 1rem;
+            padding-left: 115px; /* NEW: Space for the label (adjust as needed) */
+            border: none;
+            border-bottom: 1px dashed #e9ecef; /* Separator inside the card */
+            position: relative; /* Needed for ::before positioning */
+            min-height: 45px; /* Slightly increase min-height */
+            line-height: 1.5; /* Adjust line height for better spacing */
+        }
+        .table tbody td:last-child {
+            border-bottom: none; /* No border for the last cell (actions) */
+        }
+        .table tbody td::before {
+            content: attr(data-label); /* Get label from data-label attribute */
+            position: absolute;
+            left: 1rem; /* Position label to the left, within the padding */
+            top: 0.75rem; /* Align top with padding-top */
+            width: 90px; /* NEW: Fixed width for the label */
+            font-weight: 600;
+            color: #4a5568; /* Darker gray for label */
+            text-align: left;
+            line-height: 1.5; /* Match line-height of td */
+        }
+        /* Specific adjustments for columns */
+        .table tbody td[data-label="Product"] .d-flex {
+            justify-content: flex-end; /* Align product content to the right */
+        }
+        .table tbody td[data-label="Health Score"] .d-flex {
+             /* justify-content: flex-end; */ /* REMOVED - Let content flow naturally */
+             align-items: center; /* Ensure vertical alignment */
+        }
+        .table tbody td[data-label="Actions"] .btn {
+            width: 100%; /* Make button full width */
+        }
+        /* Adjustments for the collapsible details row */
+        .table .collapse td {
+            display: block; /* Ensure it behaves like a block */
+            text-align: left; /* Reset text align for details */
+            padding: 0; /* Remove padding from the td itself */
+            border: none; /* Remove any inherited borders */
+        }
+        .table .collapse td::before {
+            display: none; /* No label needed for details row */
+        }
+        .details-card {
+            margin: 0.5rem 0; /* Adjust margin for mobile, remove horizontal */
+            border-radius: 0; /* Remove rounding if inside the main row 'card' */
+            box-shadow: none; /* Remove shadow if inside the main row 'card' */
+            background-color: #fff; /* Ensure background isn't inherited weirdly */
+            padding: 1rem; /* Add padding inside the card */
+        }
+        .details-card h5 {
+            margin-top: 0.5rem; 
+            margin-bottom: 0.5rem;
+        }
+        .details-card .ingredients-list {
+            display: flex; /* Allow wrapping */
+            flex-wrap: wrap; /* Wrap badges to the next line */
+            gap: 0.3rem; /* Add small gap between badges */
+            margin-bottom: 1rem; /* Ensure space below the list */
+        }
+        .details-card .ingredients-list .badge {
+            font-size: 0.9em; /* Slightly larger badges in details view */
+            /* Remove specific margin/padding that might interfere with flex gap */
+            margin: 0 !important; 
+            padding: 0.4em 0.7em;
+        }
+        .details-card .extracted-text {
+            font-size: 0.9em; /* Consistent font size */
+            line-height: 1.4;
+            max-height: 200px; /* Slightly more height if needed */
+            overflow-x: auto; /* Add horizontal scroll *if absolutely needed* */
+        }
+        .details-card .extracted-text pre {
+            white-space: pre-wrap; /* Ensure wrapping works */
+            word-break: break-all; /* Force break even on long words without spaces */
+        }
+         /* Ensure alerts also wrap text correctly */
+        .details-card .alert {
+            word-break: break-word;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div class="history-header">
+    <h1>Scan History</h1>
+    <p>Review your past product scans, including ingredients, health scores, and potential warnings.</p>
+</div>
+
+<div class="container mt-4">
+    {# Search Form Container #}
+    <div class="search-form-container">
+        <form method="get" action="{% url 'history' %}" class="row g-3 align-items-end">
+            <div class="col-md-5">
+                <label for="scan_id_search" class="form-label">Search by Scan ID</label>
+                <input class="form-control" type="search" 
+                       placeholder="Enter Scan ID" aria-label="Search by Scan ID" 
+                       name="scan_id" id="scan_id_search" value="{{ search_query|default:'' }}">
+            </div>
+            <div class="col-md-5">
+                <label for="scan_date_search" class="form-label">Filter by Date</label>
+                <input class="form-control" type="date" 
+                       aria-label="Filter by Date" 
+                       name="scan_date" id="scan_date_search" value="{{ scan_date|default:'' }}">
+            </div>
+            <div class="col-md-2 d-grid">
+                <button class="btn btn-primary" type="submit" style="background-color: #56ab2f; border-color: #56ab2f;">
+                    <i class="fas fa-search me-1"></i> Search
+                </button>
+            </div>
+        </form>
+    </div>
+
+    {# --- History Table --- #}
+    <div class="card">
+        <div class="card-body p-0"> {# Remove padding to allow table full width #}
+            {% if page_obj.object_list %}
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0"> {# Removed mb-0 from table #}
+                        <thead class="table-light">
+                            <tr>
+                                <th style="width: 15%;">Date</th>
+                                <th style="width: 40%;">Product</th>
+                                <th style="width: 25%;">Health Score</th>
+                                <th style="width: 20%;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for scan in page_obj %}
+                            <tr>
+                                <td data-label="Date">{{ scan.created_at|date:"M d, Y H:i" }}</td>
+                                <td data-label="Product">
+                                    <div class="d-flex align-items-center">
+                                        {% if scan.product_image_url %}
+                                            <img src="{{ scan.product_image_url }}" alt="{{ scan.product_name|default:'Product' }}" class="product-image">
+                                        {% else %}
+                                            <span class="product-image-placeholder"><i class="fas fa-image fa-lg"></i></span>
+                                        {% endif %}
+                                        <div>
+                                            <span class="fw-bold">{{ scan.product_name|default:'Scan' }}</span><br>
+                                            {% if scan.barcode %}
+                                                <small class="text-muted font-monospace">ID: {{ scan.id }} | BC: {{ scan.barcode }}</small>
+                                            {% else %}
+                                                <small class="text-muted">ID: {{ scan.id }} | ({{ scan.source }})</small>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </td>
+                                <td data-label="Health Score">
+                                    {% with score=scan.health_score %}
+                                        {# Determine colors and DISPLAY HTML within each branch #}
+                                        {% if score < 25 %}
+                                            {% with current_bar_color='bg-danger' current_text_color='text-danger' %}
+                                                <div class="d-flex align-items-center">
+                                                    <div class="progress flex-grow-1 me-2 health-score-bar" title="Score: {{ score }}/100" style="height: 10px;">
+                                                        <div class="progress-bar {{ current_bar_color }}" role="progressbar" style="width: {{ score }}%; border-radius: 5px;" aria-valuenow="{{ score }}" aria-valuemin="0" aria-valuemax="100"></div>
+                                                    </div>
+                                                    <span class="health-score-value {{ current_text_color }}">{{ score }}</span>
+                                                </div>
+                                            {% endwith %}
+                                        {% elif score < 50 %}
+                                            {% with current_bar_color='bg-warning' current_text_color='text-warning' %}
+                                                <div class="d-flex align-items-center">
+                                                    <div class="progress flex-grow-1 me-2 health-score-bar" title="Score: {{ score }}/100" style="height: 10px;">
+                                                        <div class="progress-bar {{ current_bar_color }}" role="progressbar" style="width: {{ score }}%; border-radius: 5px;" aria-valuenow="{{ score }}" aria-valuemin="0" aria-valuemax="100"></div>
+                                                    </div>
+                                                    <span class="health-score-value {{ current_text_color }}">{{ score }}</span>
+                                                </div>
+                                            {% endwith %}
+                                        {% elif score < 75 %}
+                                            {% with current_bar_color='bg-info' current_text_color='text-info' %}
+                                                <div class="d-flex align-items-center">
+                                                    <div class="progress flex-grow-1 me-2 health-score-bar" title="Score: {{ score }}/100" style="height: 10px;">
+                                                        <div class="progress-bar {{ current_bar_color }}" role="progressbar" style="width: {{ score }}%; border-radius: 5px;" aria-valuenow="{{ score }}" aria-valuemin="0" aria-valuemax="100"></div>
+                                                    </div>
+                                                    <span class="health-score-value {{ current_text_color }}">{{ score }}</span>
+                                                </div>
+                                            {% endwith %}
+                                        {% else %}
+                                            {% with current_bar_color='bg-success' current_text_color='text-success' %}
+                                                <div class="d-flex align-items-center">
+                                                    <div class="progress flex-grow-1 me-2 health-score-bar" title="Score: {{ score }}/100" style="height: 10px;">
+                                                        <div class="progress-bar {{ current_bar_color }}" role="progressbar" style="width: {{ score }}%; border-radius: 5px;" aria-valuenow="{{ score }}" aria-valuemin="0" aria-valuemax="100"></div>
+                                                    </div>
+                                                    <span class="health-score-value {{ current_text_color }}">{{ score }}</span>
+                                                </div>
+                                            {% endwith %}
+                                        {% endif %}
+                                    {% endwith %} {# Closes the outer 'with score=...' #}
+                                </td>
+                                <td data-label="Actions">
+                                    <button class="btn btn-sm btn-outline-primary view-details-btn" 
+                                            data-bs-toggle="collapse" 
+                                            data-bs-target="#scan-details-{{ scan.id }}">
+                                        <i class="fas fa-eye me-1"></i> Details
+                                    </button>
+                                </td>
+                            </tr>
+                            <tr class="collapse" id="scan-details-{{ scan.id }}">
+                                <td colspan="4" class="p-0"> {# Remove padding for inner card #}
+                                    <div class="card card-body details-card m-2"> {# Add margin #}
+                                        {# Display product name and barcode inside details too? Optional #}
+                                        {% if scan.product_name %}
+                                            <h5>{{ scan.product_name }} {% if scan.barcode %}<small class="text-muted font-monospace">(ID: {{ scan.id }} | BC: {{ scan.barcode }})</small>{% else %}<small class="text-muted">(ID: {{ scan.id }})</small>{% endif %}</h5>
+                                            <hr>
+                                        {% else %}
+                                            <h5>Scan Details (ID: {{ scan.id }})</h5>
+                                            <hr>
+                                        {% endif %}
+                                        <h5>Ingredients</h5>
+                                        <div class="ingredients-list mb-3">
+                                            {% for ingredient in scan.ingredients %}
+                                                {% with display_name=ingredient.info.english_name|default:ingredient.name %}
+                                                    <span class="badge ingredient-badge 
+                                                        {% if ingredient.status == 'good' %}bg-success{% elif ingredient.status == 'bad' %}bg-danger{% elif ingredient.status == 'caution' %}bg-warning text-dark{% else %}bg-secondary{% endif %}
+                                                        me-1 mb-1">
+                                                        {{ display_name }}
+                                                    </span>
+                                                {% endwith %}
+                                            {% empty %}
+                                                 <p class="text-muted">No ingredients data saved for this scan.</p>
+                                            {% endfor %}
+                                        </div>
+                                        
+                                        {% if scan.warnings %}
+                                        <h5>Warnings</h5>
+                                        <div class="warnings-list mb-3">
+                                            {% for warning in scan.warnings %}
+                                                {% if warning.type == 'user_allergen_match' %}
+                                                    <div class="alert alert-danger alert-sm mb-2" role="alert">
+                                                         <i class="fas fa-exclamation-triangle me-2"></i>{{ warning.message }}
+                                                    </div>
+                                                {% else %}
+                                                    <div class="alert alert-warning alert-sm mb-2" role="alert">
+                                                        <i class="fas fa-exclamation-circle me-2"></i>{{ warning.message }}
+                                                    </div>
+                                                {% endif %}
+                                            {% endfor %}
+                                        </div>
+                                        {% endif %}
+                                        
+                                        <h5>Extracted Text ({% if scan.source == 'barcode_off' %}From DB{% else %}Raw OCR{% endif %})</h5>
+                                        <div class="extracted-text p-2">
+                                            <pre class="mb-0">{{ scan.extracted_text }}</pre>
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                 {# Pagination Controls #}
+                 <nav aria-label="Scan history navigation" class="p-3">
+                    <ul class="pagination justify-content-center mb-0">
+                        {% if page_obj.has_previous %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page=1{% if search_query %}&scan_id={{ search_query }}{% endif %}{% if scan_date %}&scan_date={{ scan_date }}{% endif %}" aria-label="First">
+                                    <span aria-hidden="true">&laquo;&laquo;</span>
+                                </a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if search_query %}&scan_id={{ search_query }}{% endif %}{% if scan_date %}&scan_date={{ scan_date }}{% endif %}" aria-label="Previous">
+                                     <span aria-hidden="true">&laquo;</span>
+                                </a>
+                            </li>
+                        {% else %}
+                            <li class="page-item disabled">
+                                <span class="page-link">&laquo;&laquo;</span>
+                            </li>
+                             <li class="page-item disabled">
+                                <span class="page-link">&laquo;</span>
+                            </li>
+                        {% endif %}
+
+                        {% for num in page_obj.paginator.page_range %}
+                            {% if page_obj.number == num %}
+                                <li class="page-item active" aria-current="page">
+                                    <span class="page-link">{{ num }}</span>
+                                </li>
+                            {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ num }}{% if search_query %}&scan_id={{ search_query }}{% endif %}{% if scan_date %}&scan_date={{ scan_date }}{% endif %}">{{ num }}</a>
+                                </li>
+                            {% elif num == page_obj.number|add:'-3' or num == page_obj.number|add:'3' %}
+                                 <li class="page-item disabled"><span class="page-link">...</span></li>
+                            {% endif %}
+                        {% endfor %}
+
+                        {% if page_obj.has_next %}
+                             <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if search_query %}&scan_id={{ search_query }}{% endif %}{% if scan_date %}&scan_date={{ scan_date }}{% endif %}" aria-label="Next">
+                                    <span aria-hidden="true">&raquo;</span>
+                                </a>
+                            </li>
+                             <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if search_query %}&scan_id={{ search_query }}{% endif %}{% if scan_date %}&scan_date={{ scan_date }}{% endif %}" aria-label="Last">
+                                    <span aria-hidden="true">&raquo;&raquo;</span>
+                                </a>
+                            </li>
+                        {% else %}
+                            <li class="page-item disabled">
+                                <span class="page-link">&raquo;</span>
+                            </li>
+                             <li class="page-item disabled">
+                                <span class="page-link">&raquo;&raquo;</span>
+                            </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+            {% else %}
+                <div class="text-center py-5">
+                    {% if search_query or scan_date %}
+                        <div class="mb-3"><i class="fas fa-search-minus fa-4x text-muted"></i></div>
+                        <h4 class="text-muted">No Scans Found</h4>
+                        <p>Your search for 
+                        {% if search_query %}Scan ID <strong>{{ search_query }}</strong>{% endif %}
+                        {% if search_query and scan_date %} and {% endif %}
+                        {% if scan_date %}on <strong>{{ scan_date }}</strong>{% endif %}
+                         did not match any records.</p>
+                        <a href="{% url 'history' %}" class="btn btn-secondary mt-2">Clear Search</a>
+                    {% else %}
+                        <div class="mb-3"><i class="fas fa-history fa-4x text-muted"></i></div>
+                        <h4 class="text-muted">No Scan History Yet</h4>
+                        <p>Start scanning products to build your history.</p>
+                        <a href="{% url 'scan' %}" class="btn btn-primary mt-3" style="background-color: #56ab2f; border-color: #56ab2f;">
+                            <i class="fas fa-camera me-2"></i> Scan Now
+                        </a>
+                    {% endif %}
+                </div>
+            {% endif %}
+        </div> {# End Card Body #}
+    </div> {# End Card #}
+
+</div> {# End Container #}
+
+{% endblock %} 
