@@ -3,6 +3,10 @@
 [![Python Version](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://python.org)
 [![Django Version](https://img.shields.io/badge/django-4.2-blue.svg)](https://www.djangoproject.com/)
 
+## Live Demo
+
+Check out the live version of this project hosted at: **[https://bejerital.pythonanywhere.com](https://bejerital.pythonanywhere.com)**
+
 ## Overview
 
 FoodScan is a web application designed to help users understand the ingredients in their food products and track their daily calorie intake. By scanning barcodes or uploading images of ingredient lists, users can leverage AI (powered by Google Gemini) and the Open Food Facts database to get detailed analysis, health scores, warnings, and nutritional information. It features secure user profile management and authentication via **Auth0, demonstrating practical application of modern identity and access management (IAM) principles**, alongside a comprehensive calorie tracking calendar.
