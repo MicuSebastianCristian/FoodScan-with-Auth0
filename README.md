@@ -1,3 +1,2 @@
-# FoodScan AI Demo
-## Introduction
-This is a demo of FoodScan with AI-powered food recognition.
+# FoodScan with Auth0
+A web application to scan and manage food products
